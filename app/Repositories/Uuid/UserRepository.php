@@ -8,7 +8,11 @@ use Ramsey\Uuid\Uuid;
 
 class UserRepository
 {
-    public function createManyIndividual(array $names)
+    /**
+     * @param array $names
+     * @throws \Exception
+     */
+    public function createManyIndividual(array $names) : void
     {
         foreach ($names as $name) {
             $userUuid = Uuid::uuid4()->toString();
@@ -25,7 +29,11 @@ class UserRepository
         }
     }
 
-    public function createManySimultaneous(array $names)
+    /**
+     * @param array $names
+     * @throws \Exception
+     */
+    public function createManySimultaneous(array $names) : void
     {
         $allUsers = [];
         $allUserLogs = [];

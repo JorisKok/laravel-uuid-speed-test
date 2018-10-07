@@ -8,7 +8,10 @@ use Ramsey\Uuid\Uuid;
 
 class UserRepository
 {
-    public function createManyIndividual(array $names)
+    /**
+     * @param array $names
+     */
+    public function createManyIndividual(array $names) : void
     {
         foreach ($names as $name) {
             $user = User::create([
@@ -21,4 +24,19 @@ class UserRepository
             ]);
         }
     }
+
+    /**
+     * @param array $names
+     */
+    public function createManySimultaneous(array $names) : void
+    {
+        $allUsers = [];
+        foreach ($names as $name) {
+            $allUsers[] = ['name' => $name];
+        }
+
+
+        User::setInsertIntoOtherClass(UserLog::class, 'user_id', ['title' => 'User created'])::insertIntoMultipleClasses($allUsers);
+    }
 }
+
