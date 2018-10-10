@@ -1,6 +1,6 @@
 <?php
 
-namespace Stress\Unit\User;
+namespace Test\Unit\User;
 
 use App\Models\User;
 use App\Models\UserLog;

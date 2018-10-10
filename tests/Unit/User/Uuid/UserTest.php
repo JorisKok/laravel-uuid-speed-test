@@ -1,6 +1,6 @@
 <?php
 
-namespace Stress\Unit\User\Uuid;
+namespace Test\Unit\User\Uuid;
 
 use App\Models\Uuid\User;
 use App\Models\Uuid\UserLog;
@@ -13,6 +13,8 @@ class UserTest extends TestCase
      * @param array $names
      * @param int $amount
      * @dataProvider namesDataProvider
+     *
+     * @throws \Exception
      */
     public function test_insert_many_users_individual_with_logs(array $names, $amount)
     {
@@ -38,6 +40,7 @@ class UserTest extends TestCase
      * @param array $names
      * @param int $amount
      * @dataProvider namesDataProvider
+     * @throws \Exception
      */
     public function test_insert_many_users_simultaneous_with_logs(array $names, $amount)
     {
@@ -58,7 +61,10 @@ class UserTest extends TestCase
         print_r(PHP_EOL . "Simultaneous time elapsed for {$amount} names with UUID: " . (float) $time / 100 . PHP_EOL);
     }
 
-    public function namesDataProvider()
+    /**
+     * @return array
+     */
+    public function namesDataProvider() : array
     {
         $hundred = [];
         foreach (range(0, 99) as $count) {

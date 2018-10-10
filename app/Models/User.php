@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Model;
  * @package App\Models\Uuid
  * @mixin \Eloquent
  *
+ * @property int $id
+ *
  * @method static $this last()
  */
 class User extends Model
