@@ -2,8 +2,6 @@
 
 namespace App\Traits;
 
-use App\Models\User;
-
 /**
  * Trait InsertOverMultipleTables
  * @package App\Traits
@@ -13,115 +11,87 @@ trait InsertIntoMultipleClasses
     /**
      * @var int
      */
-    private static $count = 0;
+    private $lastInsertedId;
+
+    /**
+     * @var int
+     */
+    private $lastInsertedIdFromChain;
 
     /**
      * @var array
      */
-    private static $values = [];
+    private $values = [];
 
     /**
      * @var array
      */
-    private static $otherClasses = [];
+    private $chainedValues = [];
 
     /**
-     * @var array
+     * @var int
      */
-    private static $chainedClasses = [];
-
-    /**
-     * @param string $otherClass
-     * @param string $relationColumn
-     * @param array $attributes
-     * @param bool $chain
-     * @return self
-     */
-    public static function setInsertIntoOtherClass(string $otherClass, string $relationColumn, array $attributes, bool $chain = false): self
-    {
-        if ($chain) {
-            end(self::$otherClasses); // Change internal pointer
-            self::$chainedClasses[$otherClass] = [key(self::$otherClasses) => end(self::$otherClasses)];
-            reset(self::$otherClasses); // Reset pointer
-        }
-
-        self::$otherClasses[$otherClass] = [
-            'relation_column' => $relationColumn,
-            'attributes' => $attributes,
-        ];
-
-        return new static();
-    }
+    private $count = 0;
 
     /**
      * @param array $values
+     * @return $this
      */
-    public static function insertIntoMultipleClasses(array $values): void
+    public static function insertMany(array $values) : self
     {
-        self::$count = \count($values);
+        $model = new self();
 
-        self::$values = $values;
+        $model->count = \count($values);
 
-        self::insert(self::$values);
+        $model->values = $values;
 
-        self::insertIntoOtherClasses(self::getLastInsertedId());
+        $model->insert($values);
+
+        $model->lastInsertedId = $model->getLastInsertedId();
+
+        return $model;
     }
 
-    /**
-     * @param string $class
-     * @return int
-     */
-    private static function getLastInsertedId(string $class = null) : int
+    public function insertChain(string $class, array $attributes, $foreignKey = null, $chain = null) : self
     {
-        $table = $class ? (new $class())->getTable() : (new self())->getTable();
+        $lastInsertedId = $chain ? $this->lastInsertedIdFromChain : $this->lastInsertedId;
 
-        $query = \DB::table($table);
+        $this->chainedValues = $this->getValues($lastInsertedId, $foreignKey, $attributes);
 
-        foreach (self::$values[self::$count - 1] as $key => $value) {
-            $query->where($key, $value);
-        }
+        (new $class())->insert($this->chainedValues);
 
-        $key = $class ? (new $class())->getKeyName() : (new self())->getKeyName();
+        $this->lastInsertedIdFromChain = $this->getLastInsertedId($class);
 
-        return $query->orderBy($key, 'desc')->first()->$key;
+        return $this;
     }
 
-    /**
-     * @param int $lastInsertedId
-     */
-    private static function insertIntoOtherClasses(int $lastInsertedId) : void
-    {
-        foreach (self::$otherClasses as $class => $otherClass) {
-            self::$values = ! empty (self::$chainedClasses[$class]) ? self::getValuesIfChained($class, $otherClass) : self::getValues($lastInsertedId, $otherClass);
 
-            (new $class())->insert(self::$values);
-        }
-    }
-
-    /**
-     * @param int $lastInsertedId
-     * @param array $otherClass
-     * @return array
-     */
-    private static function getValues(int $lastInsertedId, array $otherClass) : array
+    private function getValues(int $lastInsertedId, string $foreignKey, array $attributes) : array
     {
         $result = [];
-        foreach (range($lastInsertedId - self::$count + 1, $lastInsertedId) as $id) {
-            $result[] = \array_merge($otherClass['attributes'], [
-                $otherClass['relation_column'] => $id,
+        foreach (range($lastInsertedId - $this->count + 1, $lastInsertedId) as $id) {
+            $result[] = \array_merge($attributes, [
+                $foreignKey => $id,
             ]);
         }
 
         return $result;
     }
 
-    /**
-     * @param string $class
-     * @param array $otherClass
-     * @return array
-     */
-    private static function getValuesIfChained(string $class, array $otherClass) : array
+    private function getLastInsertedId(string $class = null)
     {
-        return self::getValues(self::getLastInsertedId(key(self::$chainedClasses[$class])), $otherClass);
+        $table = $class ? (new $class())->getTable() : (new self())->getTable();
+
+        $values = $class ? $this->chainedValues : $this->values;
+
+        $query = \DB::table($table);
+
+        foreach ($values[$this->count - 1] as $key => $value) {
+            $query->where($key, $value);
+        }
+
+        $key = $class ? (new $class())->getKeyName() : (new self())->getKeyName();
+
+        return $query->orderBy($key, 'desc')->first()->$key;
     }
 }

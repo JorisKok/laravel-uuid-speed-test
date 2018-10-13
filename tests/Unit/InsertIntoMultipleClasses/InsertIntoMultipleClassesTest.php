@@ -97,7 +97,7 @@ class InsertIntoMultipleClassesTest extends TestCase
 
         return [
             [['anna', 'dave'], 2],
-//            [$hundred, 100], // TODO undo
+//            [$hundred, 100], // TODO undo and make the trait not static!! it remembers stuff that shouldnt be remembered ~!
         ];
     }
 

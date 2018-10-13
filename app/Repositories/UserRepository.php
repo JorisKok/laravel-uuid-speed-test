@@ -37,7 +37,7 @@ class UserRepository
         }
 
 
-        User::setInsertIntoOtherClass(UserLog::class, 'user_id', ['title' => 'User created'])::insertIntoMultipleClasses($allUsers);
+        User::insertMany($allUsers)->insertChain(UserLog::class, ['title' => 'User_created'], 'user_id'); // TODO remove user_id
     }
 
     public function createManyWithMailboxSimultaneousFromBase(array $names) : void
@@ -47,9 +47,9 @@ class UserRepository
             $allUsers[] = ['name' => $name];
         }
 
-        User::setInsertIntoOtherClass(UserLog::class, 'user_id', ['title' => 'User created'])
-            ::setInsertIntoOtherClass(Mailbox::class, 'user_id', ['title' => 'Welcome to our site'])
-            ::insertIntoMultipleClasses($allUsers);
+        User::insertMany($allUsers)
+            ->insertChain(UserLog::class, ['title' => 'User_created'], 'user_id') // TODO remove user_id
+            ->insertChain(Mailbox::class, ['title' => 'Welcome to our site'], 'user_id');
     }
 
     public function createManyWithMailboxSimultaneousChaining(array $names) : void
@@ -59,9 +59,9 @@ class UserRepository
             $allUsers[] = ['name' => $name];
         }
 
-        User::setInsertIntoOtherClass(UserLog::class, 'user_id', ['title' => 'User created'])
-            ::setInsertIntoOtherClass(Mailbox::class, 'user_log_id', ['title' => 'Welcome to our site'], true)
-            ::insertIntoMultipleClasses($allUsers);
+        User::insertMany($allUsers)
+            ->insertChain(UserLog::class, ['title' => 'User created'], 'user_id')
+            ->insertChain(Mailbox::class, ['title' => 'Welcome to our site'], 'user_log_id', true);
     }
 }
 
